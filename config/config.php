@@ -14,7 +14,7 @@ define('BASE_URL', 'http://localhost/BTL/TechStore');
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
 define('SMTP_USERNAME', 'letruongthinh1410@gmail.com');
-define('SMTP_PASSWORD', 'ypgt jurc iwnp lpie');
+define('SMTP_PASSWORD', '');
 define('SMTP_FROM_EMAIL', 'letruongthinh1410@gmail.com');
 define('SMTP_FROM_NAME', 'TechStore');
 
