@@ -15,13 +15,11 @@ class User extends BaseModel {
     }
 
     // Tạo user mới
-    public function createUser($email, $passwordHash, $fullName = null, $verificationToken = null) {
+    public function createUser($email, $passwordHash, $fullName = null) {
         $data = [
             'email' => $email,
             'password_hash' => $passwordHash,
             'full_name' => $fullName,
-            'verification_token' => $verificationToken,
-            'email_verified' => 0,
         ];
         return $this->create($data);
     }

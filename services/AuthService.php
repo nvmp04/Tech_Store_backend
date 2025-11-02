@@ -81,24 +81,24 @@ class AuthService {
 
             // Create user
             $passwordHash = $this->hashPassword($password);
-            $verificationToken = $this->generateVerificationToken();
+            // $verificationToken = $this->generateVerificationToken();
 
             $userId = $this->userModel->createUser(
                 $email,
                 $passwordHash,
                 $fullName,
-                $verificationToken
+                // $verificationToken
             );
 
             // TODO: Gửi email verification
-            $emailService = new EmailService();
-            $emailService->sendVerificationEmail($email, $verificationToken);
+            // $emailService = new EmailService();
+            // $emailService->sendVerificationEmail($email, $verificationToken);
 
             return [
                 'success' => true,
-                'message' => 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản',
+                'message' => 'Đăng ký thành công.',
                 'user_id' => $userId,
-                'verification_url' => BASE_URL . "/api/verify-email.php?token=" . $verificationToken
+                // 'verification_url' => BASE_URL . "/api/verify-email.php?token=" . $verificationToken
             ];
 
         } catch (Exception $e) {
