@@ -2,10 +2,10 @@
 // JWT Configuration
 define('JWT_SECRET_KEY', 'k9$ZB!w2Qp4#x5V@Df3mHu8%Jr6^Tg1*Ys5&Ln0!Pa9$Xe2Qf4#Wc7Vr');
 define('JWT_ALGORITHM', 'HS256');
-define('JWT_EXPIRATION', value: 3600); // 1 hour (3600 seconds)
+define('JWT_EXPIRATION', 3600); // 1 hour (3600 seconds)
 
 // Password Configuration
-define('PASSWORD_MIN_LENGTH', value: 8);
+define('PASSWORD_MIN_LENGTH', 8);
 
 // Base URL
 define('BASE_URL', 'http://localhost/BTL/TechStore');

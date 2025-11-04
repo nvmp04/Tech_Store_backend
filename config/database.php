@@ -3,8 +3,8 @@
     private $host = "localhost";
     private $db_name = "tech_store";
     private $username = "root";
-    private $port = 3307;
-    private $password = "141020";
+    private $port = 3306;
+    private $password = "";
     private $conn;
 
     public function connect(): PDO{
