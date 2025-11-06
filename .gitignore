@@ -1,1 +1,61 @@
-vendor/
+# OS files
+.DS_Store
+Thumbs.db
+
+# Composer
+/vendor/
+/composer.lock
+composer.phar
+
+# PHPStorm / IDEA
+/.idea/
+
+# VS Code
+.vscode/
+
+# Logs & Debug
+*.log
+logs/
+storage/logs/
+var/logs/
+
+# Environment & Secrets
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Cache
+cache/
+tmp/
+temp/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+var/cache/
+
+# PHPUnit
+.phpunit.result.cache
+coverage/
+
+# Laravel Specific
+/node_modules/
+public/storage
+public/hot
+public/build
+Homestead.yaml
+Homestead.json
+npm-debug.log
+yarn-error.log
+
+# Symfony Specific
+/var/
+/vendor/
+/.env.local.php
+/.phpunit.cache/
+
+# Other
+*.cache
+*.swp
+*.bak
+*.tmp
