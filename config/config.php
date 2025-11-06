@@ -1,25 +1,29 @@
+
 <?php
-// JWT Configuration
-define('JWT_SECRET_KEY', 'k9$ZB!w2Qp4#x5V@Df3mHu8%Jr6^Tg1*Ys5&Ln0!Pa9$Xe2Qf4#Wc7Vr');
-define('JWT_ALGORITHM', 'HS256');
-define('JWT_EXPIRATION', 3600); // 1 hour (3600 seconds)
+require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/auto_init.php';
+// JWT
+define('JWT_SECRET_KEY', $_ENV['JWT_SECRET_KEY']);
+define('JWT_ALGORITHM', $_ENV['JWT_ALGORITHM']);
+define('JWT_EXPIRATION', (int)$_ENV['JWT_EXPIRATION']);
 
-// Password Configuration
-define('PASSWORD_MIN_LENGTH', 8);
+// PASSWORD
+define('PASSWORD_MIN_LENGTH', (int)$_ENV['PASSWORD_MIN_LENGTH']);
 
-// Base URL
-define('BASE_URL', 'http://localhost/BTL/TechStore');
+// BASE URL
+define('BASE_URL', $_ENV['BASE_URL']);
 
-// Email Configuration (để sau)
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_USERNAME', 'letruongthinh1410@gmail.com');
-define('SMTP_PASSWORD', '');
-define('SMTP_FROM_EMAIL', 'letruongthinh1410@gmail.com');
-define('SMTP_FROM_NAME', 'TechStore');
+// EMAIL
+define('SMTP_HOST', $_ENV['SMTP_HOST']);
+define('SMTP_PORT', (int)$_ENV['SMTP_PORT']);
+define('SMTP_USERNAME', $_ENV['SMTP_USERNAME']);
+define('SMTP_PASSWORD', $_ENV['SMTP_PASSWORD']);
+define('SMTP_FROM_EMAIL', $_ENV['SMTP_FROM_EMAIL']);
+define('SMTP_FROM_NAME', $_ENV['SMTP_FROM_NAME']);
+
 
 // Timezone
-date_default_timezone_set('Asia/Ho_Chi_Minh');
+date_default_timezone_set($_ENV['TIMEZONE']);
 
 // Error reporting (tắt trong production)
 error_reporting(E_ALL);

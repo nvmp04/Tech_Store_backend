@@ -15,7 +15,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 **Endpoint:**
 ```
-POST /api/register.php
+POST /api/auth/register.php
 ```
 
 **Headers:**
@@ -61,7 +61,7 @@ Content-Type: application/json
 
 **Endpoint:**
 ```
-GET /api/verify-email.php?token={verification_token}
+GET /api/auth/verify-email.php?token={verification_token}
 ```
 
 **Parameters:**
@@ -89,7 +89,7 @@ GET /api/verify-email.php?token={verification_token}
 
 **Endpoint:**
 ```
-POST /api/login.php
+POST /api/auth/login.php
 ```
 
 **Headers:**
@@ -147,7 +147,7 @@ Content-Type: application/json
 
 **Endpoint:**
 ```
-GET /api/me.php
+GET /api/auth/me.php
 ```
 
 **Headers:**
@@ -184,7 +184,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 **Endpoint:**
 ```
-POST /api/change-password.php
+POST /api/auth/change-password.php
 ```
 
 **Headers:**
@@ -217,15 +217,568 @@ Authorization: Bearer YOUR_JWT_TOKEN
 }
 ```
 
+
+
+### 6. Lấy profile
+```http
+GET /user/profile.php
+Authorization: Bearer <token>
+```
+
+### 7. Cập nhật profile
+```http
+PUT /user/profile.php
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "full_name": "Nguyen Van B"
+}
+```
+
+
+## Admin Endpoints (Requires: admin)
+**Thông tin:**
+- Email: `admin@techstore.com`
+- Password: `Admin@123`
+- Role: `admin`
+### User Management
+
+#### 1. Lấy danh sách users
+```http
+GET /admin/users.php?limit=20&offset=0
+Authorization: Bearer <admin-token>
+```
+
+#### 2. Lọc users theo role
+```http
+GET /admin/users.php?role=user&limit=20&offset=0
+Authorization: Bearer <admin-token>
+```
+
+#### 3. Chi tiết user
+```http
+GET /admin/users.php?id=user-uuid
+Authorization: Bearer <admin-token>
+```
+
+#### 4. Cập nhật role user
+```http
+PUT /admin/users.php
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{
+  "user_id": "uuid",
+  "role": "admin"
+}
+```
+
+**Allowed roles:** `guest`, `user`, `admin`
+
+#### 5. Xóa user
+```http
+DELETE /admin/users.php?id=user-uuid
+Authorization: Bearer <admin-token>
+```
+
+### Statistics
+
+#### 6. Thống kê users
+```http
+GET /admin/statistics.php
+Authorization: Bearer <admin-token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "statistics": {
+    "total_users": 150,
+    "total_admins": 3,
+    "total_regular_users": 145,
+    "total_guests": 2
+  }
+}
+```
+
+## Response Format
+
+### Success Response
+```json
+{
+  "success": true,
+  "data": [...],
+  "message": "Optional message"
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "message": "Error message"
+}
+```
+
+### Pagination Format
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "total": 150,
+    "limit": 20,
+    "offset": 0,
+    "pages": 8
+  }
+}
+```
+
 ---
 
-## Error Codes
+## Admin
+**Thông tin:**
+- Email: `admin@techstore.com`
+- Password: `Admin@123`
+- Role: `admin`
 
-| HTTP Code | Ý nghĩa | Gợi ý xử lý |
-|-----------|----------|-------------|
-| 200 | OK | Hiển thị kết quả |
-| 201 | Created | Đăng ký thành công |
-| 400 | Bad Request | Lỗi validation hoặc thiếu field |
-| 401 | Unauthorized | Token không hợp lệ hoặc hết hạn |
-| 405 | Method Not Allowed | Sai method HTTP |
-| 500 | Internal Server Error | Lỗi hệ thống, thử lại hoặc báo admin |
+# API Documentation - Giỏ hàng & Đơn hàng 
+
+## CART APIs
+
+### 1. Lấy giỏ hàng
+```http
+GET /api/cart/index.php
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "cart": {
+    "id": "cart-uuid",
+    "status": "active",
+    "items": [
+      {
+        "id": "item-uuid",
+        "product_id": 1,
+        "name": "MacBook Pro M3",
+        "quantity": 2,
+        "price": 45000000,
+        "is_selected": 1,
+        "subtotal": 90000000,
+        "images": ["..."],
+        "in_stock": 1
+      }
+    ],
+    "total": 90000000,
+    "selected_total": 90000000,
+    "item_count": 1,
+    "selected_count": 1
+  }
+}
+```
+
+**Cart Status:**
+- `active` - Giỏ hàng đang hoạt động
+- `checked_out` - Đã thanh toán
+- `abandoned` - Đã bỏ quên
+
+### 2. Thêm sản phẩm vào giỏ
+```http
+POST /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "quantity": 2
+}
+```
+
+### 3. Cập nhật số lượng
+```http
+PUT /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "item_id": "item-uuid",
+  "quantity": 3
+}
+```
+
+**Note:** Nếu quantity = 0, item sẽ bị xóa khỏi giỏ
+
+### 4. Đánh dấu chọn/bỏ chọn sản phẩm
+
+#### 4.1. Toggle single item
+```http
+PATCH /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "action": "toggle_selection",
+  "item_id": "item-uuid",
+  "is_selected": true
+}
+```
+
+#### 4.2. Chọn tất cả
+```http
+PATCH /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "action": "select_all"
+}
+```
+
+#### 4.3. Bỏ chọn tất cả
+```http
+PATCH /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "action": "unselect_all"
+}
+```
+
+#### 4.4. Cập nhật trạng thái giỏ hàng
+```http
+PATCH /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "action": "update_status",
+  "status": "abandoned"
+}
+```
+
+### 5. Xóa sản phẩm
+```http
+DELETE /api/cart/index.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "item_id": "item-uuid"
+}
+```
+
+### 6. Xóa toàn bộ giỏ hàng
+```http
+POST /api/cart/clear.php
+Authorization: Bearer {token}
+```
+
+---
+
+## ORDER APIs
+
+### 1. MUA NGAY (Buy Now)
+Đặt hàng trực tiếp 1 sản phẩm không cần giỏ hàng
+
+```http
+POST /api/orders/buy-now.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "quantity": 1,
+  "full_name": "Nguyễn Văn A",
+  "email": "user@example.com",
+  "phone": "0901234567",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 1",
+  "ward": "Phường Bến Nghé",
+  "address_detail": "123 Đường Lê Lợi",
+  "note": "Giao giờ hành chính"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Đặt hàng thành công",
+  "order_id": "order-uuid"
+}
+```
+
+### 2. CHECKOUT Selected Items
+Đặt hàng những sản phẩm đã chọn trong giỏ
+
+**Cách 1: Checkout items đã đánh dấu `is_selected = 1`**
+```http
+POST /api/orders/checkout.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "full_name": "Nguyễn Văn A",
+  "email": "user@example.com",
+  "phone": "0901234567",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 1",
+  "ward": "Phường Bến Nghé",
+  "address_detail": "123 Đường Lê Lợi",
+  "note": "Gọi trước khi giao"
+}
+```
+
+**Cách 2: Checkout theo IDs cụ thể**
+```http
+POST /api/orders/checkout.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "cart_item_ids": ["item-uuid-1", "item-uuid-2"],
+  "full_name": "Nguyễn Văn A",
+  "email": "user@example.com",
+  "phone": "0901234567",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 1",
+  "ward": "Phường Bến Nghé",
+  "address_detail": "123 Đường Lê Lợi",
+  "note": "Gọi trước khi giao"
+}
+```
+
+**Note:** 
+- Nếu không truyền `cart_item_ids`, hệ thống checkout items có `is_selected = 1`
+- Sau khi checkout thành công, items sẽ bị xóa khỏi giỏ
+- Nếu giỏ trống sau checkout → cart status = `checked_out`
+
+### 3. Lấy danh sách đơn hàng (có pagination)
+```http
+GET /api/orders/index.php?page=1&limit=10&status=pending
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `page` (optional): Trang hiện tại, default = 1
+- `limit` (optional): Số items/trang, default = 10, max = 100
+- `status` (optional): Filter theo trạng thái (pending, confirmed, shipping, delivered, cancelled)
+
+**Response:**
+```json
+{
+  "success": true,
+  "orders": [
+    {
+      "id": "order-uuid",
+      "full_name": "Nguyễn Văn A",
+      "email": "user@example.com",
+      "phone": "0901234567",
+      "province": "Hồ Chí Minh",
+      "district": "Quận 1",
+      "ward": "Phường Bến Nghé",
+      "address_detail": "123 Đường Lê Lợi",
+      "total_amount": 90000000,
+      "status": "pending",
+      "payment_status": "unpaid",
+      "total_items": 2,
+      "created_at": "2025-01-15 10:30:00"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_items": 47,
+    "items_per_page": 10,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+### 4. Lấy chi tiết đơn hàng theo ID
+```http
+GET /api/orders/detail.php?id=order-uuid
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "order": {
+    "id": "order-uuid",
+    "full_name": "Nguyễn Văn A",
+    "province": "Hồ Chí Minh",
+    "district": "Quận 1",
+    "ward": "Phường Bến Nghé",
+    "address_detail": "123 Đường Lê Lợi",
+    "total_amount": 90000000,
+    "status": "confirmed",
+    "payment_status": "unpaid",
+    "items": [
+      {
+        "id": "item-uuid",
+        "product_id": 1,
+        "product_name": "MacBook Pro M3",
+        "quantity": 2,
+        "price": 45000000,
+        "subtotal": 90000000,
+        "images": ["..."]
+      }
+    ]
+  }
+}
+```
+
+### 5. Thống kê đơn hàng theo trạng thái
+```http
+GET /api/orders/statistics.php
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "statistics": {
+    "total_orders": 15,
+    "total_amount": 500000000,
+    "by_status": {
+      "pending": {
+        "count": 3,
+        "total_amount": 100000000
+      },
+      "confirmed": {
+        "count": 2,
+        "total_amount": 80000000
+      },
+      "shipping": {
+        "count": 5,
+        "total_amount": 200000000
+      },
+      "delivered": {
+        "count": 4,
+        "total_amount": 100000000
+      },
+      "cancelled": {
+        "count": 1,
+        "total_amount": 20000000
+      }
+    }
+  }
+}
+```
+
+### 6. Hủy đơn hàng
+```http
+POST /api/orders/cancel.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "order_id": "order-uuid"
+}
+```
+
+**Note:** Chỉ hủy được đơn hàng có status = `pending` hoặc `confirmed`
+
+---
+
+## ADMIN APIs
+
+### 1. Lấy tất cả đơn hàng (Admin)
+```http
+GET /api/admin/orders.php?page=1&limit=20&status=pending
+Authorization: Bearer {admin_token}
+```
+
+### 2. Lấy chi tiết đơn hàng (Admin)
+```http
+GET /api/admin/orders.php?id=order-uuid
+Authorization: Bearer {admin_token}
+```
+
+### 3. Cập nhật trạng thái đơn hàng (Admin)
+```http
+PUT /api/admin/orders.php
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+
+{
+  "order_id": "order-uuid",
+  "status": "shipping",
+  "payment_status": "paid"
+}
+```
+
+**Valid Statuses:**
+- Order Status: `pending`, `confirmed`, `shipping`, `delivered`, `cancelled`
+- Payment Status: `unpaid`, `paid`, `refunded`
+
+---
+
+## Workflow Thực tế
+
+### Flow 1: Mua qua giỏ hàng (với selection)
+```
+1. Thêm sản phẩm vào giỏ: POST /api/cart/index.php
+2. Xem giỏ hàng: GET /api/cart/index.php
+3. Đánh dấu chọn items muốn mua: PATCH /api/cart/index.php
+   Body: { action: "toggle_selection", item_id: "...", is_selected: true }
+4. Checkout selected items: POST /api/orders/checkout.php
+   Body: { full_name, email, phone, province, district, ward, address_detail }
+```
+
+### Flow 2: Mua ngay (Buy Now)
+```
+1. Mua trực tiếp: POST /api/orders/buy-now.php
+   Body: { product_id, quantity, full_name, email, phone, province, district, ward, address_detail }
+```
+
+### Flow 3: Quản lý giỏ hàng
+```
+1. Chọn tất cả: PATCH /api/cart/index.php { action: "select_all" }
+2. Bỏ chọn tất cả: PATCH /api/cart/index.php { action: "unselect_all" }
+3. Cập nhật trạng thái giỏ: PATCH /api/cart/index.php { action: "update_status", status: "abandoned" }
+```
+
+---
+
+## Key Features
+
+### Cart Selection System
+- Mỗi item có flag `is_selected` (0 hoặc 1)
+- User có thể chọn/bỏ chọn từng item hoặc tất cả
+- Checkout chỉ các items được chọn
+- Tính tổng riêng cho items được chọn
+
+### Cart Status Management
+- `active` - Giỏ hàng đang sử dụng
+- `checked_out` - Đã thanh toán (tự động khi giỏ trống sau checkout)
+- `abandoned` - Có thể đánh dấu thủ công
+
+### Address Fields (Required)
+- `province` - Tỉnh/Thành phố
+- `district` - Quận/Huyện
+- `ward` - Phường/Xã ✨ **NEW**
+- `address_detail` - Số nhà, tên đường
+
+### Payment Method
+ `payment_method`, mặc định COD
+
+---
+
+Common HTTP Status Codes:
+- `400` - Bad Request (thiếu thông tin, dữ liệu không hợp lệ)
+- `401` - Unauthorized (chưa đăng nhập)
+- `403` - Forbidden (không có quyền)
+- `404` - Not Found (không tìm thấy)
+- `405` - Method Not Allowed
+- `500` - Internal Server Error

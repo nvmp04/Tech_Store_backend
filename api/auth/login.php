@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../services/AuthService.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../services/AuthService.php';
 
 // Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

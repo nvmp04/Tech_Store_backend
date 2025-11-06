@@ -10,6 +10,34 @@ abstract class BaseModel {
         $this->conn = $database->connect();
     }
 
+    /**
+     * Get database connection
+     */
+    public function getConnection() {
+        return $this->conn;
+    }
+
+    /**
+     * Begin transaction
+     */
+    public function beginTransaction() {
+        return $this->conn->beginTransaction();
+    }
+
+    /**
+     * Commit transaction
+     */
+    public function commit() {
+        return $this->conn->commit();
+    }
+
+    /**
+     * Rollback transaction
+     */
+    public function rollBack() {
+        return $this->conn->rollBack();
+    }
+
     // Find record by ID
     public function findById($id) {
         $stmt = $this->conn->prepare("SELECT * FROM {$this->table} WHERE id = ?");
@@ -42,6 +70,7 @@ abstract class BaseModel {
         
         return $stmt->fetchAll();
     }
+    
     // Create new record
     public function create($data){
         $fields = array_keys($data);
@@ -71,7 +100,7 @@ abstract class BaseModel {
 
     // Delete record by ID
     public function delete($id){
-        $stmt = $this->conn->prepare("DELETE FROM {this->table} WHERE id = ?");
+        $stmt = $this->conn->prepare("DELETE FROM {$this->table} WHERE id = ?");
         return $stmt->execute([$id]);
     }
 
@@ -89,5 +118,3 @@ abstract class BaseModel {
         return $stmt->fetch()['total'];
     }
 }
-
-

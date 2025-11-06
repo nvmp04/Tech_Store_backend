@@ -4,7 +4,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-require_once __DIR__ . '/../middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 // Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // Authenticate user
-$user = AuthMiddleware::authenticate();
+$user = AuthMiddleware::requireUser();
 
 // Return user data
 echo json_encode([
