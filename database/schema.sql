@@ -6,6 +6,7 @@ USE tech_store;
 
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    role VARCHAR(50) NOT NULL DEFAULT 'user',
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
@@ -42,3 +43,81 @@ CREATE TABLE IF NOT EXISTS products (
   INDEX idx_rating (rating),
   INDEX idx_price (price)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- giỏ hàng
+CREATE TABLE IF NOT EXISTS carts (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    status ENUM('active', 'checked_out', 'abandoned') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- chi tiết giỏ hàng
+CREATE TABLE IF NOT EXISTS cart_items (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    cart_id CHAR(36) NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL DEFAULT 1,
+    price BIGINT UNSIGNED NOT NULL,
+    is_selected TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_cart_product (cart_id, product_id),
+    INDEX idx_cart_id (cart_id),
+    INDEX idx_product_id (product_id),
+    INDEX idx_is_selected (is_selected)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- đơn hàng
+CREATE TABLE IF NOT EXISTS orders (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    
+    -- Thông tin người nhận
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    province VARCHAR(100) NOT NULL,
+    district VARCHAR(100) NOT NULL,
+    ward VARCHAR(100) NOT NULL,
+    address_detail TEXT NOT NULL,
+    
+    -- Thông tin đơn hàng
+    total_amount BIGINT UNSIGNED NOT NULL,
+    status ENUM('pending', 'confirmed', 'shipping', 'delivered', 'cancelled') DEFAULT 'pending',
+    payment_status ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid',
+    
+    -- Ghi chú
+    note TEXT DEFAULT NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_payment_status (payment_status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- chi tiết đơn hàng
+CREATE TABLE IF NOT EXISTS order_items (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    order_id CHAR(36) NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    quantity INT UNSIGNED NOT NULL,
+    price BIGINT UNSIGNED NOT NULL,
+    subtotal BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_order_id (order_id),
+    INDEX idx_product_id (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -59,7 +59,8 @@ class AuthService {
     /**
      * ĐĂNG KÝ USER MỚI
      */
-    public function register($email, $password, $fullName = null) {
+    // THAY ĐỔI: Thêm tham số $role với giá trị mặc định 'user'
+    public function register($email, $password, $fullName = null, $role = 'user') {
         try {
             // Validate email
             if (!$this->validateEmail($email)) {
@@ -83,10 +84,12 @@ class AuthService {
             $passwordHash = $this->hashPassword($password);
             // $verificationToken = $this->generateVerificationToken();
 
+            // THAY ĐỔI: Truyền $role vào createUser
             $userId = $this->userModel->createUser(
                 $email,
                 $passwordHash,
                 $fullName,
+                $role
                 // $verificationToken
             );
 
@@ -152,10 +155,12 @@ class AuthService {
             $this->userModel->updateLastLogin($user['id']);
 
             // Generate JWT
+            // THAY ĐỔI: Thêm 'role' vào payload
             $payload = [
                 'user_id' => $user['id'],
                 'email' => $user['email'],
-                'full_name' => $user['full_name']
+                'full_name' => $user['full_name'],
+                'role' => $user['role'] // Giả sử model trả về $user['role']
             ];
 
             $token = JWTHelper::encode($payload);
@@ -168,7 +173,8 @@ class AuthService {
                     'id' => $user['id'],
                     'email' => $user['email'],
                     'full_name' => $user['full_name'],
-                    'email_verified' => $user['email_verified']
+                    'email_verified' => $user['email_verified'],
+                    'role' => $user['role'] // THAY ĐỔI: Thêm 'role' vào thông tin user
                 ]
             ];
 
@@ -197,6 +203,7 @@ class AuthService {
             }
 
             $userId = $result['payload']['user_id'];
+            // Đảm bảo rằng getUserProfile cũng trả về 'role'
             return $this->userModel->getUserProfile($userId);
 
         } catch (Exception $e) {

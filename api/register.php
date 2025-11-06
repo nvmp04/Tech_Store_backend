@@ -34,7 +34,8 @@ $authService = new AuthService();
 $result = $authService->register(
     $data['email'],
     $data['password'],
-    $data['full_name'] ?? null
+    $data['full_name'] ?? null,
+    $data['role'] ?? 'user'
 );
 
 http_response_code($result['success'] ? 201 : 400);

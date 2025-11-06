@@ -8,6 +8,7 @@ class ProductsService {
         id, name, price, old_price, badge,
         rating, reviews, in_stock, images,
         cpu, ram, storage, display, gpu, os, description,
+        category,
         created_at, updated_at
       FROM products
       ORDER BY id ASC
@@ -40,12 +41,13 @@ class ProductsService {
     if ($name === '' || !is_numeric($price)) {
       return ['success' => false, 'message' => 'name và price là bắt buộc'];
     }
-    $old_price  = (int)($input['old_price'] ?? 0);
-    $badge      = $input['badge'] ?? null;
-    $rating     = (float)($input['rating'] ?? 0);
-    $reviews    = (int)($input['reviews'] ?? 0);
-    $in_stock   = isset($input['inStock']) ? (int)!!$input['inStock'] : 1;
-    $description= $input['description'] ?? null;
+    $old_price   = (int)($input['old_price'] ?? 0);
+    $badge       = $input['badge'] ?? null;
+    $rating      = (float)($input['rating'] ?? 0);
+    $reviews     = (int)($input['reviews'] ?? 0);
+    $in_stock    = isset($input['inStock']) ? (int)!!$input['inStock'] : 1;
+    $description = $input['description'] ?? null;
+    $category    = $input['category'] ?? null; 
 
     $images = $input['images'] ?? [];
     if (is_string($images)) $images = [$images];
@@ -58,7 +60,6 @@ class ProductsService {
     }, $images)));
     $imagesJson = $images ? json_encode($images, JSON_UNESCAPED_UNICODE) : null;
 
-    
     $specs = is_array($input['specs'] ?? null) ? $input['specs'] : [];
     $cpu     = $specs['cpu']     ?? ($input['cpu']     ?? null);
     $ram     = $specs['ram']     ?? ($input['ram']     ?? null);
@@ -70,10 +71,10 @@ class ProductsService {
     try {
       $sql = "INSERT INTO products
               (name, price, old_price, badge, rating, reviews, in_stock, images,
-               cpu, ram, storage, display, gpu, os, description)
+               cpu, ram, storage, display, gpu, os, description, category)
               VALUES
               (:name, :price, :old_price, :badge, :rating, :reviews, :in_stock, :images,
-               :cpu, :ram, :storage, :display, :gpu, :os, :description)";
+               :cpu, :ram, :storage, :display, :gpu, :os, :description, :category)";
       $st = $this->pdo->prepare($sql);
       $st->execute([
         ':name' => $name,
@@ -91,6 +92,7 @@ class ProductsService {
         ':gpu' => $gpu,
         ':os' => $os,
         ':description' => $description,
+        ':category' => $category,
       ]);
       $id = (int)$this->pdo->lastInsertId();
 
@@ -103,7 +105,9 @@ class ProductsService {
 
   public function getOne($id): array {
     $sql = "
-      SELECT * FROM products WHERE id = $id
+      SELECT *
+      FROM products
+      WHERE id = $id
       ORDER BY id ASC
     ";
     $rows = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
@@ -127,5 +131,4 @@ class ProductsService {
 
     return $rows;
   }
-
 }
