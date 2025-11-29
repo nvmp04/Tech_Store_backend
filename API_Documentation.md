@@ -774,7 +774,649 @@ Content-Type: application/json
  `payment_method`, mặc định COD
 
 ---
+# 📚 API DOCUMENTATION - REVIEWS & POSTS SYSTEM
 
+## 🎯 TỔNG QUAN
+
+Hệ thống bao gồm:
+- **Product Reviews/Comments**: Đánh giá & bình luận sản phẩm
+- **Posts (Blog/News)**: Quản lý bài viết/tin tức
+- **Post Comments**: Bình luận bài viết (nested threading)
+- **Post Categories**: Danh mục bài viết
+
+---
+
+## 🔐 AUTHENTICATION
+
+Tất cả API cần auth sử dụng JWT token trong header:
+```
+Authorization: Bearer {token}
+```
+
+**User roles:**
+- `guest`: Khách (hạn chế)
+- `user`: User thông thường
+- `admin`: Quản trị viên
+
+---
+
+# 📦 PRODUCT REVIEWS & COMMENTS
+
+## 1. Lấy Reviews/Comments của Sản Phẩm
+
+```http
+GET /api/products/reviews.php?product_id={id}
+```
+
+**Query Params:**
+- `product_id` (required): ID sản phẩm
+- `verified` (optional): `1` = chỉ reviews, `0` = chỉ comments
+- `page` (default: 1)
+- `limit` (default: 20, max: 50)
+
+**Response:**
+```json
+{
+  "success": true,
+  "reviews": [
+    {
+      "id": "uuid",
+      "product_id": 123,
+      "user_id": "uuid",
+      "full_name": "Nguyễn Văn A",
+      "rating": 5,
+      "content": "Sản phẩm rất tốt",
+      "verified": 1,
+      "admin_response": "Cảm ơn bạn đã tin dùng",
+      "admin_response_at": "2024-01-15 10:30:00",
+      "created_at": "2024-01-15 09:00:00"
+    }
+  ],
+  "stats": {
+    "average_rating": 4.5,
+    "review_count": 120,
+    "total_comments": 45,
+    "distribution": {
+      "5": {"count": 80, "percentage": 66.7},
+      "4": {"count": 25, "percentage": 20.8},
+      "3": {"count": 10, "percentage": 8.3},
+      "2": {"count": 3, "percentage": 2.5},
+      "1": {"count": 2, "percentage": 1.7}
+    }
+  },
+  "pagination": {...}
+}
+```
+
+---
+
+## 2. Tạo Review/Comment
+
+```http
+POST /api/products/reviews.php
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "product_id": 123,
+  "content": "Sản phẩm tốt",
+  "rating": 5  // Optional, bắt buộc nếu đã mua
+}
+```
+
+**Logic:**
+- Nếu user **đã mua** sản phẩm → tạo **review** (verified=1), rating bắt buộc
+- Nếu user **chưa mua** → tạo **comment** (verified=0), rating optional
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Đánh giá của bạn đã được gửi",
+  "review_id": "uuid",
+  "verified": true
+}
+```
+
+---
+
+## 3. Admin: Quản Lý Reviews
+
+```http
+GET /api/admin/product-reviews.php
+Authorization: Bearer {admin_token}
+```
+
+**Query Params:**
+- `product_id` (optional): Filter theo sản phẩm
+- `verified` (optional): `1` = reviews, `0` = comments
+- `status` (optional): `approved`, `hidden`, `spam`
+- `page`, `limit`
+
+---
+
+## 4. User: Sửa Review (trong 30 ngày)
+
+```http
+PUT /api/products/reviews.php?id={review_id}
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "content": "Nội dung đã sửa sau 1 tháng dùng...",
+  "rating": 4
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Đã cập nhật đánh giá của bạn"
+}
+```
+
+**Rules:**
+- Chỉ edit được review của mình
+- Chỉ edit được trong vòng 30 ngày
+- Sau 30 ngày → Error 403
+
+---
+
+## 5. User: Xóa Review (trong 7 ngày)
+
+```http
+DELETE /api/products/reviews.php?id={review_id}
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Đã xóa đánh giá của bạn"
+}
+```
+
+**Rules:**
+- Chỉ xóa được review của mình
+- Chỉ xóa được trong vòng 7 ngày
+- Sau 7 ngày → Error 403
+
+---
+
+## 6. Admin: Cập Nhật Review
+
+```http
+PUT /api/admin/product-reviews.php?id={review_id}
+Authorization: Bearer {admin_token}
+```
+
+**Body (chọn 1 hoặc nhiều):**
+```json
+{
+  "status": "hidden",  // approved, hidden, spam
+  "admin_response": "Cảm ơn bạn đã đánh giá"
+}
+```
+
+---
+
+## 7. Admin: Xóa Review
+
+```http
+DELETE /api/admin/product-reviews.php?id={review_id}
+Authorization: Bearer {admin_token}
+```
+
+---
+
+# 📰 POSTS (BÀI VIẾT)
+
+## 1. Lấy Danh Sách Bài Viết (Public)
+
+```http
+GET /api/posts.php
+```
+
+**Query Params:**
+- `category` (optional): Slug category (vd: `tech-news`)
+- `search` (optional): Tìm kiếm trong title & excerpt
+- `featured` (optional): `1` = chỉ bài nổi bật
+- `page` (default: 1)
+- `limit` (default: 10, max: 50)
+
+**Response:**
+```json
+{
+  "success": true,
+  "posts": [
+    {
+      "id": "uuid",
+      "title": "Laptop Gaming 2024",
+      "slug": "laptop-gaming-2024",
+      "excerpt": "Top 5 laptop...",
+      "thumbnail": "https://...",
+      "author_name": "Admin",
+      "category_name": "Review sản phẩm",
+      "category_slug": "product-reviews",
+      "view_count": 1250,
+      "published_at": "2024-01-15 10:00:00"
+    }
+  ],
+  "pagination": {...},
+  "filters": {...}
+}
+```
+
+---
+
+## 2. Lấy Chi Tiết Bài Viết
+
+```http
+GET /api/posts.php?slug={slug}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "post": {
+    "id": "uuid",
+    "title": "...",
+    "slug": "...",
+    "content": "<p>Nội dung HTML...</p>",
+    "excerpt": "...",
+    "thumbnail": "...",
+    "author_name": "Admin",
+    "category_name": "Tin công nghệ",
+    "view_count": 1251,
+    "published_at": "..."
+  },
+  "comments": [...],  // Nested tree structure
+  "comment_count": 15,
+  "related_posts": [...]
+}
+```
+
+---
+
+## 3. Admin: Tạo Bài Viết
+
+```http
+POST /api/admin/posts.php
+Authorization: Bearer {admin_token}
+```
+
+**Body:**
+```json
+{
+  "title": "Tiêu đề bài viết",
+  "content": "<p>Nội dung HTML</p>",
+  "excerpt": "Mô tả ngắn",
+  "category_id": 1,
+  "thumbnail": "https://...",
+  "status": "draft",  // draft hoặc published
+  "is_featured": 0
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Đã tạo bài viết",
+  "post": {...}
+}
+```
+
+---
+
+## 4. Admin: Cập Nhật Bài Viết
+
+```http
+PUT /api/admin/posts.php?id={post_id}
+Authorization: Bearer {admin_token}
+```
+
+**Body (các field đều optional):**
+```json
+{
+  "title": "Tiêu đề mới",
+  "content": "...",
+  "excerpt": "...",
+  "category_id": 2,
+  "thumbnail": "...",
+  "status": "published",
+  "is_featured": 1
+}
+```
+
+---
+
+## 5. Admin: Xóa Bài Viết (Soft Delete)
+
+```http
+DELETE /api/admin/posts.php?id={post_id}
+Authorization: Bearer {admin_token}
+```
+
+**Khôi phục:**
+```http
+PUT /api/admin/posts.php?id={post_id}
+Body: { "action": "restore" }
+```
+
+---
+
+## 6. Admin: Lấy Tất Cả Bài Viết
+
+```http
+GET /api/admin/posts.php
+Authorization: Bearer {admin_token}
+```
+
+**Query Params:**
+- `status`: `draft`, `published`
+- `category_id`: Filter theo category
+- `search`: Tìm kiếm
+- `include_deleted`: `1` = bao gồm bài đã xóa
+- `page`, `limit`
+
+---
+
+# 💬 POST COMMENTS
+
+## 1. Lấy Comments của Bài Viết
+
+```http
+GET /api/post-comments.php?post_id={id}
+```
+
+**Response:** Nested tree structure
+```json
+{
+  "success": true,
+  "comments": [
+    {
+      "id": "uuid",
+      "post_id": "uuid",
+      "parent_id": null,
+      "author_name": "Nguyễn Văn A",
+      "author_email": "user@example.com",
+      "content": "Bài viết hay quá",
+      "created_at": "...",
+      "replies": [
+        {
+          "id": "uuid",
+          "parent_id": "uuid_parent",
+          "author_name": "Admin",
+          "content": "Cảm ơn bạn!",
+          "replies": []
+        }
+      ]
+    }
+  ],
+  "total_count": 25
+}
+```
+
+---
+
+## 2. Tạo Comment (User hoặc Guest)
+
+```http
+POST /api/post-comments.php
+Authorization: Bearer {token}  // Optional (guest không cần)
+```
+
+**Body (User đã login):**
+```json
+{
+  "post_id": "uuid",
+  "content": "Bình luận của tôi",
+  "parent_id": "uuid"  // Optional, để reply
+}
+```
+
+**Body (Guest):**
+```json
+{
+  "post_id": "uuid",
+  "content": "Bình luận của tôi",
+  "author_name": "Khách",
+  "author_email": "guest@example.com",
+  "parent_id": null
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Bình luận của bạn đang chờ duyệt",  // Guest
+  "comment_id": "uuid",
+  "status": "pending"  // User: approved, Guest: pending
+}
+```
+
+---
+
+## 3. User: Sửa Comment (trong 24h)
+
+```http
+PUT /api/post-comments.php?id={comment_id}
+Authorization: Bearer {token}
+```
+
+**Body:**
+```json
+{
+  "content": "Nội dung đã sửa"
+}
+```
+
+---
+
+## 4. User: Xóa Comment (trong 24h)
+
+```http
+DELETE /api/post-comments.php?id={comment_id}
+Authorization: Bearer {token}
+```
+
+---
+
+## 5. Admin: Quản Lý Comments
+
+```http
+GET /api/admin/post-comments.php
+Authorization: Bearer {admin_token}
+```
+
+**Query Params:**
+- `status`: `pending`, `approved`, `spam`
+- `post_id`: Filter theo bài viết
+- `search`: Tìm kiếm
+- `page`, `limit`
+
+**Response bao gồm:**
+```json
+{
+  "comments": [...],
+  "pending_count": 5,  // Số comment chờ duyệt
+  ...
+}
+```
+
+---
+
+## 6. Admin: Duyệt/Spam Comment
+
+```http
+PUT /api/admin/post-comments.php?id={comment_id}
+Authorization: Bearer {admin_token}
+```
+
+**Body:**
+```json
+{
+  "action": "approve"  // approve, spam, pending
+}
+```
+
+Hoặc:
+```json
+{
+  "status": "approved"  // approved, spam, pending
+}
+```
+
+---
+
+## 7. Admin: Xóa Comment
+
+```http
+DELETE /api/admin/post-comments.php?id={comment_id}
+Authorization: Bearer {admin_token}
+```
+
+---
+
+# 📂 POST CATEGORIES
+
+## 1. Lấy Danh Sách Categories (Public)
+
+```http
+GET /api/post-categories.php
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "categories": [
+    {
+      "id": 1,
+      "name": "Tin công nghệ",
+      "slug": "tech-news",
+      "description": "...",
+      "post_count": 45,
+      "display_order": 1
+    }
+  ]
+}
+```
+
+---
+
+## 2. Admin: Tạo Category
+
+```http
+POST /api/admin/post-categories.php
+Authorization: Bearer {admin_token}
+```
+
+**Body:**
+```json
+{
+  "name": "Khuyến mãi",
+  "description": "Chương trình khuyến mãi",
+  "display_order": 5
+}
+```
+
+---
+
+## 3. Admin: Cập Nhật Category
+
+```http
+PUT /api/admin/post-categories.php?id={category_id}
+Authorization: Bearer {admin_token}
+```
+
+**Body:**
+```json
+{
+  "name": "Tên mới",
+  "description": "...",
+  "display_order": 3
+}
+```
+
+---
+
+## 4. Admin: Xóa Category
+
+```http
+DELETE /api/admin/post-categories.php?id={category_id}
+Authorization: Bearer {admin_token}
+```
+
+**Lưu ý:** Không thể xóa nếu category có bài viết
+
+---
+
+# 📤 UPLOAD ẢNH
+
+```http
+POST /api/admin/upload.php
+Authorization: Bearer {admin_token}
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+- `file`: Image file (JPG, PNG, GIF, WEBP, max 5MB)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Upload thành công",
+  "url": "https://domain.com/uploads/posts/post_abc123.jpg",
+  "filename": "post_abc123.jpg"
+}
+```
+
+---
+
+# 🎯 WORKFLOW EXAMPLES
+
+## Workflow 1: User Đánh Giá Sản Phẩm
+
+1. User mua sản phẩm → Order status: `delivered`
+2. User gọi `POST /api/products/reviews.php` với `rating` + `content`
+3. Hệ thống check `hasUserPurchased()` → verified=1
+4. Review hiển thị ngay (status: approved)
+5. Admin có thể reply qua admin_response
+
+## Workflow 2: User Chưa Mua - Comment Sản Phẩm
+
+1. User chưa mua, muốn hỏi
+2. User gọi `POST /api/products/reviews.php` với `content` (không có rating)
+3. Hệ thống tạo comment (verified=0)
+4. Comment hiển thị ngay
+
+## Workflow 3: Guest Comment Bài Viết
+
+1. Guest gọi `POST /api/post-comments.php` với name + email
+2. Comment status: `pending`
+3. Admin vào `/api/admin/post-comments.php` duyệt
+4. Admin gọi `PUT ...?id=xxx` với `action: approve`
+5. Comment hiển thị public
+
+## Workflow 4: User Comment Bài Viết
+
+1. User đã login gọi `POST /api/post-comments.php`
+2. Comment status: `approved` (hiện ngay)
+3. User có thể reply lồng nhau (nested)
+4. User có 24h để edit/xóa comment
+
+---
 Common HTTP Status Codes:
 - `400` - Bad Request (thiếu thông tin, dữ liệu không hợp lệ)
 - `401` - Unauthorized (chưa đăng nhập)

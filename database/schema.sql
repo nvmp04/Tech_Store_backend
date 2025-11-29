@@ -133,3 +133,152 @@ CREATE TABLE IF NOT EXISTS order_items (
     INDEX idx_order_id (order_id),
     INDEX idx_product_id (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- PRODUCT REVIEWS & COMMENTS
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS product_reviews (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    product_id INT UNSIGNED NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    order_id CHAR(36) DEFAULT NULL,
+    
+    -- Content
+    rating TINYINT UNSIGNED DEFAULT NULL CHECK (rating BETWEEN 1 AND 5),
+    content TEXT NOT NULL,
+    
+    -- Classification
+    verified TINYINT(1) DEFAULT 0 COMMENT '1: review sau mua, 0: comment thường',
+    status ENUM('approved', 'hidden', 'spam') DEFAULT 'approved',
+    
+    -- Admin response
+    admin_response TEXT DEFAULT NULL,
+    admin_response_at TIMESTAMP NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    
+    -- Generated column để giả lập partial UNIQUE (1 review/user/product)
+    verified_key TINYINT 
+        AS (CASE 
+                WHEN verified = 1 AND status = 'approved' THEN 1 
+                ELSE NULL 
+            END) STORED,
+    UNIQUE KEY unique_verified_review (user_id, product_id, verified_key),
+    
+    INDEX idx_product_id (product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_verified (verified),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- POST CATEGORIES
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS post_categories (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT DEFAULT NULL,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_slug (slug),
+    INDEX idx_display_order (display_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default categories
+INSERT INTO post_categories (name, slug, description, display_order) VALUES
+('Tin công nghệ', 'tech-news', 'Tin tức công nghệ mới nhất', 1),
+('Review sản phẩm', 'product-reviews', 'Đánh giá chi tiết sản phẩm', 2),
+('Hướng dẫn', 'guides', 'Hướng dẫn sử dụng và mẹo hay', 3),
+('Khuyến mãi', 'promotions', 'Chương trình khuyến mãi hot', 4)
+ON DUPLICATE KEY UPDATE name=VALUES(name);
+
+-- ==========================================
+-- POSTS (Bài viết)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS posts (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    
+    -- Content
+    content LONGTEXT NOT NULL,
+    excerpt TEXT DEFAULT NULL,
+    thumbnail VARCHAR(500) DEFAULT NULL,
+    
+    -- Author & Category
+    author_id CHAR(36) NOT NULL,
+    category_id INT UNSIGNED DEFAULT NULL,
+    
+    -- Status
+    status ENUM('draft', 'published') DEFAULT 'draft',
+    is_featured TINYINT(1) DEFAULT 0,
+    
+    -- Metrics
+    view_count INT UNSIGNED DEFAULT 0,
+    
+    -- Timestamps
+    published_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES post_categories(id) ON DELETE SET NULL,
+    
+    INDEX idx_slug (slug),
+    INDEX idx_author_id (author_id),
+    INDEX idx_category_id (category_id),
+    INDEX idx_status (status),
+    INDEX idx_is_featured (is_featured),
+    INDEX idx_published_at (published_at),
+    INDEX idx_deleted_at (deleted_at),
+    INDEX idx_view_count (view_count),
+    
+    FULLTEXT INDEX ft_search (title, excerpt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- POST COMMENTS (Nested threading)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS post_comments (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    post_id CHAR(36) NOT NULL,
+    parent_id CHAR(36) DEFAULT NULL COMMENT 'NULL: root comment, có giá trị: reply',
+    
+    -- Author info
+    user_id CHAR(36) DEFAULT NULL COMMENT 'NULL nếu guest comment',
+    author_name VARCHAR(100) NOT NULL,
+    author_email VARCHAR(255) DEFAULT NULL,
+    
+    -- Content
+    content TEXT NOT NULL,
+    
+    -- Status
+    status ENUM('pending', 'approved', 'spam') DEFAULT 'pending',
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES post_comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    
+    INDEX idx_post_id (post_id),
+    INDEX idx_parent_id (parent_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
