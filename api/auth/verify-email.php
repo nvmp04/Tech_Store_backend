@@ -2,8 +2,8 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../services/AuthService.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../services/AuthService.php';
 
 // Get token from query string
 $token = $_GET['token'] ?? '';

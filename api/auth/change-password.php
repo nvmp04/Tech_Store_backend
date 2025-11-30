@@ -4,8 +4,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../services/AuthService.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../../services/AuthService.php';
 
 // Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -19,24 +20,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Authenticate user
+$user = AuthMiddleware::requireUser();
+
 // Get input data
 $data = json_decode(file_get_contents("php://input"), true);
 
 // Validate required fields
-if (empty($data['email']) || empty($data['password'])) {
+if (empty($data['old_password']) || empty($data['new_password'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Email và password là bắt buộc']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Mật khẩu cũ và mật khẩu mới là bắt buộc'
+    ]);
     exit;
 }
 
-// Register user
+// Change password
 $authService = new AuthService();
-$result = $authService->register(
-    $data['email'],
-    $data['password'],
-    $data['full_name'] ?? null,
-    $data['role'] ?? 'user'
+$result = $authService->changePassword(
+    $user['id'],
+    $data['old_password'],
+    $data['new_password']
 );
 
-http_response_code($result['success'] ? 201 : 400);
+http_response_code($result['success'] ? 200 : 400);
 echo json_encode($result, JSON_UNESCAPED_UNICODE);

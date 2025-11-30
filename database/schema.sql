@@ -10,13 +10,26 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
-    email_verified TINYINT(1) DEFAULT 0,
-    verification_token VARCHAR(64),
+    role ENUM('guest', 'user', 'admin') DEFAULT 'user',
+    -- email_verified TINYINT(1) DEFAULT 0,
+    -- verification_token VARCHAR(64),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_verification_token (verification_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO users (id, email, password_hash, full_name, role) 
+VALUES (
+    UUID(),
+    'admin@techstore.com',
+    '$2y$12$LQv3c1yycEn7sZVxfQDkjO8JhCkYiEZq.Uw8pQC5fN5o3W5X5m5Jm', -- Admin@123
+    'System Admin',
+    'admin'
+)
+ON DUPLICATE KEY UPDATE 
+    password_hash = VALUES(password_hash),
+    role = 'admin';
 
 CREATE TABLE IF NOT EXISTS products (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -26,7 +39,7 @@ CREATE TABLE IF NOT EXISTS products (
   badge       VARCHAR(32)         DEFAULT NULL,     
   rating      DECIMAL(2,1)        DEFAULT 0.0,     
   reviews     INT UNSIGNED        DEFAULT 0,
-  in_stock    TINYINT(1)          NOT NULL DEFAULT 1,
+  in_stock    INT UNSIGNED        NOT NULL DEFAULT 1,
   images      JSON                DEFAULT NULL,     
   
   cpu         VARCHAR(128)        DEFAULT NULL,

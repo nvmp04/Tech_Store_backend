@@ -2,7 +2,7 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Max-Age: 86400');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { 
     http_response_code(204); 
@@ -50,6 +50,37 @@ try {
 
         if (!empty($result['success']) && $result['success']) {
             out($result, 201);
+        } else {
+            out($result, 400);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        // Chỉnh sửa sản phẩm
+        if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+            out(['success' => false, 'message' => 'ID sản phẩm là bắt buộc'], 400);
+        }
+
+        $id = (int)$_GET['id'];
+        $body = json_decode(file_get_contents('php://input'), true);
+        $result = $svc->update($id, $body);
+
+        if (!empty($result['success']) && $result['success']) {
+            out($result, 200);
+        } else {
+            out($result, 400);
+        }
+
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        // Xóa sản phẩm
+        if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+            out(['success' => false, 'message' => 'ID sản phẩm là bắt buộc'], 400);
+        }
+
+        $id = (int)$_GET['id'];
+        $result = $svc->delete($id);
+
+        if (!empty($result['success']) && $result['success']) {
+            out($result, 200);
         } else {
             out($result, 400);
         }

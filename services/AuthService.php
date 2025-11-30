@@ -1,13 +1,16 @@
 <?php
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Cart.php';
 require_once __DIR__ . '/../helpers/JWTHelper.php';
 require_once __DIR__ . '/../services/EmailService.php';
 
 class AuthService {
     private $userModel;
+    private $cartModel;
     
     public function __construct() {
         $this->userModel = new User();
+        $this->cartModel = new Cart();
     }
 
     /**
@@ -59,8 +62,7 @@ class AuthService {
     /**
      * ĐĂNG KÝ USER MỚI
      */
-    // THAY ĐỔI: Thêm tham số $role với giá trị mặc định 'user'
-    public function register($email, $password, $fullName = null, $role = 'user') {
+    public function register($email, $password, $fullName = null, $role = User::ROLE_USER) {
         try {
             // Validate email
             if (!$this->validateEmail($email)) {
@@ -80,9 +82,13 @@ class AuthService {
                 return ['success' => false, 'message' => 'Email đã được sử dụng'];
             }
 
+            // Validate role
+            if (!in_array($role, [User::ROLE_GUEST, User::ROLE_USER, User::ROLE_ADMIN])) {
+                $role = User::ROLE_USER;
+            }
+
             // Create user
             $passwordHash = $this->hashPassword($password);
-            // $verificationToken = $this->generateVerificationToken();
 
             // THAY ĐỔI: Truyền $role vào createUser
             $userId = $this->userModel->createUser(
@@ -90,18 +96,12 @@ class AuthService {
                 $passwordHash,
                 $fullName,
                 $role
-                // $verificationToken
             );
-
-            // TODO: Gửi email verification
-            // $emailService = new EmailService();
-            // $emailService->sendVerificationEmail($email, $verificationToken);
 
             return [
                 'success' => true,
                 'message' => 'Đăng ký thành công.',
-                'user_id' => $userId,
-                // 'verification_url' => BASE_URL . "/api/verify-email.php?token=" . $verificationToken
+                'user_id' => $userId
             ];
 
         } catch (Exception $e) {
@@ -146,21 +146,18 @@ class AuthService {
                 return ['success' => false, 'message' => 'Email hoặc mật khẩu không đúng'];
             }
 
-            // Check email verified (bỏ comment nếu muốn bắt buộc verify)
-            // if (!$user['email_verified']) {
-            //     return ['success' => false, 'message' => 'Vui lòng xác thực email trước khi đăng nhập'];
-            // }
-
             // Update last login
             $this->userModel->updateLastLogin($user['id']);
 
-            // Generate JWT
-            // THAY ĐỔI: Thêm 'role' vào payload
+            // Get or create cart for user
+            $cart = $this->cartModel->getOrCreateCart($user['id']);
+
+            // Generate JWT with role
             $payload = [
                 'user_id' => $user['id'],
                 'email' => $user['email'],
                 'full_name' => $user['full_name'],
-                'role' => $user['role'] // Giả sử model trả về $user['role']
+                'role' => $user['role']
             ];
 
             $token = JWTHelper::encode($payload);
@@ -173,9 +170,10 @@ class AuthService {
                     'id' => $user['id'],
                     'email' => $user['email'],
                     'full_name' => $user['full_name'],
-                    'email_verified' => $user['email_verified'],
-                    'role' => $user['role'] // THAY ĐỔI: Thêm 'role' vào thông tin user
-                ]
+                    'role' => $user['role'],
+                    'email_verified' => $user['email_verified']
+                ],
+                'cart_id' => $cart['id']
             ];
 
         } catch (Exception $e) {
@@ -245,6 +243,46 @@ class AuthService {
         } catch (Exception $e) {
             error_log("Change password error: " . $e->getMessage());
             return ['success' => false, 'message' => 'Có lỗi xảy ra khi đổi mật khẩu'];
+        }
+    }
+
+    /**
+     * CẬP NHẬT ROLE (Admin only)
+     */
+    public function updateUserRole($adminId, $targetUserId, $newRole) {
+        try {
+            // Check admin permission
+            if (!$this->userModel->isAdmin($adminId)) {
+                return ['success' => false, 'message' => 'Không có quyền thực hiện thao tác này'];
+            }
+
+            // Validate role
+            if (!in_array($newRole, [User::ROLE_GUEST, User::ROLE_USER, User::ROLE_ADMIN])) {
+                return ['success' => false, 'message' => 'Role không hợp lệ'];
+            }
+
+            // Check target user exists
+            $targetUser = $this->userModel->findById($targetUserId);
+            if (!$targetUser) {
+                return ['success' => false, 'message' => 'User không tồn tại'];
+            }
+
+            // Update role
+            $this->userModel->updateRole($targetUserId, $newRole);
+
+            return [
+                'success' => true, 
+                'message' => 'Cập nhật role thành công',
+                'user' => [
+                    'id' => $targetUserId,
+                    'email' => $targetUser['email'],
+                    'role' => $newRole
+                ]
+            ];
+
+        } catch (Exception $e) {
+            error_log("Update role error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Có lỗi xảy ra khi cập nhật role'];
         }
     }
 }
