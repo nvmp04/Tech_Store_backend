@@ -106,8 +106,8 @@ CREATE TABLE IF NOT EXISTS orders (
     status ENUM('pending', 'confirmed', 'shipping', 'delivered', 'cancelled') DEFAULT 'pending',
     payment_status ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid',
     
-    -- Ghi chú
-    note TEXT DEFAULT NULL,
+    -- Thông tin đánh giá
+    rate TINYINT(1) NOT NULL DEFAULT 0,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -133,4 +133,25 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_order_id (order_id),
     INDEX idx_product_id (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS comments (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    product_id INT UNSIGNED NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    parent_id CHAR(36) DEFAULT NULL,
+    content TEXT NOT NULL,
+    rating DECIMAL(2,1) NOT NULL DEFAULT 0.0,
+    verified TINYINT(1) DEFAULT 0, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('active', 'hidden', 'deleted') DEFAULT 'active',
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
+    INDEX idx_product_id (product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_parent_id (parent_id),
+    INDEX idx_verified (verified),
+    INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

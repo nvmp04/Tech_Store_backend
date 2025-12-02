@@ -75,8 +75,8 @@ class OrderService {
                     'district' => $orderInfo['district'],
                     'ward' => $orderInfo['ward'],
                     'address_detail' => $orderInfo['address_detail'],
-                    'total_amount' => $totalAmount,
-                    'note' => $orderInfo['note'] ?? null
+                        'total_amount' => $totalAmount,
+                        'rate' => $orderInfo['rate'] ?? 0
                 ];
 
                 $orderId = $this->orderModel->createOrder($orderData);
@@ -167,8 +167,8 @@ class OrderService {
                     'district' => $orderInfo['district'],
                     'ward' => $orderInfo['ward'],
                     'address_detail' => $orderInfo['address_detail'],
-                    'total_amount' => $totalAmount,
-                    'note' => $orderInfo['note'] ?? null
+                        'total_amount' => $totalAmount,
+                        'rate' => $orderInfo['rate'] ?? 0
                 ];
 
                 $orderId = $this->orderModel->createOrder($orderData);

@@ -500,8 +500,7 @@ Content-Type: application/json
   "province": "Hồ Chí Minh",
   "district": "Quận 1",
   "ward": "Phường Bến Nghé",
-  "address_detail": "123 Đường Lê Lợi",
-  "note": "Giao giờ hành chính"
+  "address_detail": "123 Đường Lê Lợi"
 }
 ```
 
@@ -530,8 +529,7 @@ Content-Type: application/json
   "province": "Hồ Chí Minh",
   "district": "Quận 1",
   "ward": "Phường Bến Nghé",
-  "address_detail": "123 Đường Lê Lợi",
-  "note": "Gọi trước khi giao"
+  "address_detail": "123 Đường Lê Lợi"
 }
 ```
 
@@ -549,8 +547,7 @@ Content-Type: application/json
   "province": "Hồ Chí Minh",
   "district": "Quận 1",
   "ward": "Phường Bến Nghé",
-  "address_detail": "123 Đường Lê Lợi",
-  "note": "Gọi trước khi giao"
+  "address_detail": "123 Đường Lê Lợi"
 }
 ```
 
@@ -585,6 +582,7 @@ Authorization: Bearer {token}
       "ward": "Phường Bến Nghé",
       "address_detail": "123 Đường Lê Lợi",
       "total_amount": 90000000,
+      "rate": false,
       "status": "pending",
       "payment_status": "unpaid",
       "total_items": 2,
@@ -620,6 +618,7 @@ Authorization: Bearer {token}
     "ward": "Phường Bến Nghé",
     "address_detail": "123 Đường Lê Lợi",
     "total_amount": 90000000,
+    "rate": false,
     "status": "confirmed",
     "payment_status": "unpaid",
     "items": [
@@ -690,6 +689,132 @@ Content-Type: application/json
 **Note:** Chỉ hủy được đơn hàng có status = `pending` hoặc `confirmed`
 
 ---
+
+## COMMENTS APIs
+
+### 1. Lấy comments theo product
+```http
+GET /api/comments.php?product_id={product_id}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "comments": [
+    {
+      "id": "comment-uuid",
+      "parent_id": null,
+      "userName": "Nguyễn Văn A",
+      "date": "15/10/2024",
+      "verified": false,
+      "comment": "Sản phẩm dùng rất tốt!",
+      "rating": 0.0
+    }
+  ]
+}
+```
+
+### 2. Thêm comment (POST)
+```http
+POST /api/comments.php
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid",
+  "product_id": 123,
+  "content": "Sản phẩm dùng rất tốt!",
+  "rating": 4.0, # optional, if not provided default 0
+  "parent_id": null,
+  "verified": false
+}
+
+### 2. Delete comment
+```http
+DELETE /api/comments.php
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "id": "comment-uuid"
+}
+
+Example (PowerShell):
+```powershell
+curl -X DELETE 'http://localhost/BE_Tech_Store/api/comments.php' -H 'Content-Type: application/json' -H 'Authorization: Bearer YOUR_TOKEN' -d '{"id":"comment-uuid"}'
+```
+```
+
+**Behavior:**
+- Soft deletes the specified comment by setting `status` to `deleted`.
+- Recursively soft-deletes child comments where `parent_id` matches a deleted comment.
+- Only the comment owner or admin can delete a comment.
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "deleted_ids": ["comment-uuid", "child-comment-uuid-1", "child-comment-uuid-2"],
+  "message": "Comment deleted"
+}
+```
+```
+
+### 3. Thêm rating/đánh giá (POST)
+```http
+POST /api/rating.php
+Content-Type: application/json
+
+{
+  "user_id": "user-uuid",
+  "order_id": "order-uuid",
+  "product_id": 123, # optional; if provided, only update this product; otherwise all products in order
+  "rating": 4.0,
+  "content": "Sản phẩm tốt, giao nhanh!",
+  "verified": true,
+  "parent_id": null
+}
+```
+
+**Behavior:**
+- Uses `order_id` to find product(s) purchased in that order.
+- If `content` provided, a `comment` entry is inserted for each product.
+- Sets `orders.rate` = true for the specified `order_id`.
+- For each product, increments `reviews` and recalculates `rating` as a new average (rounded to 1 decimal place in display).
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "message": "Rating saved and product(s) updated",
+  "products": [
+    {
+      "product_id": 1,
+      "rating": 4.3,
+      "reviews": 12
+    }
+  ]
+}
+```
+
+
+**Response – 201 Created**
+```json
+{
+  "success": true,
+  "comment": {
+    "id": "comment-uuid",
+    "product_id": 123,
+    "user_id": "user-uuid",
+    "content": "Sản phẩm dùng rất tốt!",
+    "parent_id": null,
+    "verified": false,
+    "created_at": "2025-11-12 10:30:00"
+  },
+  "message": "Comment created"
+}
+```
+
 
 ## ADMIN APIs
 

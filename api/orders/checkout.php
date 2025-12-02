@@ -39,6 +39,7 @@ foreach ($required as $field) {
     }
 }
 
+$orderRate = 0; // default false
 // Prepare order info
 $orderInfo = [
     'full_name' => $data['full_name'],
@@ -48,7 +49,7 @@ $orderInfo = [
     'district' => $data['district'],
     'ward' => $data['ward'],
     'address_detail' => $data['address_detail'],
-    'note' => $data['note'] ?? null
+    'rate' => $orderRate
 ];
 
 $orderService = new OrderService();

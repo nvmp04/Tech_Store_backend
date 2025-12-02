@@ -14,8 +14,8 @@ class Order extends BaseModel {
         $stmt = $this->conn->prepare("
             INSERT INTO orders (
                 id, user_id, full_name, email, phone, province, district, ward,
-                address_detail, total_amount, quantity, note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                address_detail, total_amount, rate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
@@ -29,8 +29,7 @@ class Order extends BaseModel {
             $data['ward'],
             $data['address_detail'],
             $data['total_amount'],
-            $data['quantity'] ?? 0,
-            $data['note'] ?? null
+            $data['rate'] ?? 0
         ]);
 
         return $orderId;
