@@ -1,24 +1,23 @@
+-- Tạo cơ sở dữ liệu
 CREATE DATABASE IF NOT EXISTS tech_store
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_general_ci;
 
 USE tech_store;
 
+-- Bảng người dùng
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    role VARCHAR(50) NOT NULL DEFAULT 'user',
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
     role ENUM('guest', 'user', 'admin') DEFAULT 'user',
-    -- email_verified TINYINT(1) DEFAULT 0,
-    -- verification_token VARCHAR(64),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email),
-    INDEX idx_verification_token (verification_token)
+    INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Thêm admin mặc định
 INSERT INTO users (id, email, password_hash, full_name, role) 
 VALUES (
     UUID(),
@@ -31,6 +30,7 @@ ON DUPLICATE KEY UPDATE
     password_hash = VALUES(password_hash),
     role = 'admin';
 
+-- Bảng sản phẩm
 CREATE TABLE IF NOT EXISTS products (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name        VARCHAR(255)        NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS products (
   INDEX idx_price (price)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- giỏ hàng
+-- Bảng giỏ hàng
 CREATE TABLE IF NOT EXISTS carts (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id CHAR(36) NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS carts (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- chi tiết giỏ hàng
+-- Chi tiết giỏ hàng
 CREATE TABLE IF NOT EXISTS cart_items (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     cart_id CHAR(36) NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     price BIGINT UNSIGNED NOT NULL,
     is_selected TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     UNIQUE KEY unique_cart_product (cart_id, product_id),
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     INDEX idx_is_selected (is_selected)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- đơn hàng
+-- Bảng đơn hàng
 CREATE TABLE IF NOT EXISTS orders (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id CHAR(36) NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS orders (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- chi tiết đơn hàng
+-- Chi tiết đơn hàng
 CREATE TABLE IF NOT EXISTS order_items (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     order_id CHAR(36) NOT NULL,
@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     INDEX idx_product_id (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Bảng bình luận
 CREATE TABLE IF NOT EXISTS comments (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     product_id INT UNSIGNED NOT NULL,
@@ -148,7 +149,7 @@ CREATE TABLE IF NOT EXISTS comments (
     status ENUM('active', 'hidden', 'deleted') DEFAULT 'active',
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
+FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_product_id (product_id),
     INDEX idx_user_id (user_id),
     INDEX idx_parent_id (parent_id),
