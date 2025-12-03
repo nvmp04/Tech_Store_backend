@@ -171,7 +171,7 @@ class AuthService {
                     'email' => $user['email'],
                     'full_name' => $user['full_name'],
                     'role' => $user['role'],
-                    'email_verified' => $user['email_verified']
+                    //'email_verified' => $user['email_verified']
                 ],
                 'cart_id' => $cart['id']
             ];

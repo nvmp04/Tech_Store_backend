@@ -16,9 +16,9 @@ define('BASE_URL', $_ENV['BASE_URL']);
 // EMAIL
 define('SMTP_HOST', $_ENV['SMTP_HOST']);
 define('SMTP_PORT', (int)$_ENV['SMTP_PORT']);
-define('SMTP_USERNAME', $_ENV['SMTP_USERNAME']);
-define('SMTP_PASSWORD', $_ENV['SMTP_PASSWORD']);
-define('SMTP_FROM_EMAIL', $_ENV['SMTP_FROM_EMAIL']);
+//define('SMTP_USERNAME', $_ENV['SMTP_USERNAME']);
+//define('SMTP_PASSWORD', $_ENV['SMTP_PASSWORD']);
+//define('SMTP_FROM_EMAIL', $_ENV['SMTP_FROM_EMAIL']);
 define('SMTP_FROM_NAME', $_ENV['SMTP_FROM_NAME']);
 
 

@@ -18,17 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Thêm admin mặc định
-INSERT INTO users (id, email, password_hash, full_name, role) 
-VALUES (
-    UUID(),
-    'admin@techstore.com',
-    '$2y$12$LQv3c1yycEn7sZVxfQDkjO8JhCkYiEZq.Uw8pQC5fN5o3W5X5m5Jm', -- Admin@123
-    'System Admin',
-    'admin'
-)
-ON DUPLICATE KEY UPDATE 
-    password_hash = VALUES(password_hash),
-    role = 'admin';
+
 
 -- Bảng sản phẩm
 CREATE TABLE IF NOT EXISTS products (
