@@ -900,6 +900,330 @@ Content-Type: application/json
 
 ---
 
+## CAROUSEL APIs
+
+### 1. Lấy danh sách carousel [Public]
+```http
+GET /api/carousel.php
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "carousel": [
+    {
+      "id": "carousel-uuid",
+      "url": "https://example.com/image1.jpg",
+      "created_at": "2025-12-07 10:30:00"
+    }
+  ]
+}
+```
+
+### 2. Thêm carousel [Public]
+```http
+POST /api/carousel.php
+Content-Type: multipart/form-data
+
+{
+  "image": <binary file data>
+}
+```
+
+**Form Data:**
+- `image`: File hình ảnh (bắt buộc)
+  - Định dạng hỗ trợ: JPEG, PNG, GIF, WebP
+  - Kích thước tối đa: 5MB
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": "carousel-uuid",
+  "url": "http://localhost/BE_Tech_Store/uploads/carousel/carousel_123abc.jpg",
+  "message": "Carousel item created"
+}
+```
+
+**Error – 400 Bad Request**
+```json
+{
+  "success": false,
+  "message": "Invalid file type. Only JPEG, PNG, GIF, WebP are allowed"
+}
+```
+
+**Error – 413 Payload Too Large**
+```json
+{
+  "success": false,
+  "message": "File size exceeds 5MB limit"
+}
+```
+
+### 3. Xóa carousel [Public]
+```http
+DELETE /api/carousel.php
+Content-Type: application/json
+
+{
+  "id": "carousel-uuid"
+}
+```
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": "carousel-uuid",
+  "message": "Carousel item deleted"
+}
+```
+
+---
+
+## NEWS APIs
+
+### 1. Lấy danh sách tin tức [Public]
+```http
+GET /api/news.php
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "news": [
+    {
+      "id": 1,
+      "title": "Tiêu đề",
+      "excerpt": "Mô tả",
+      "content": "Nội dung",
+      "thumbnail": "http://localhost/BE_Tech_Store/uploads/abc.jpg",
+      "created_at": "2025-01-01 12:00:00"
+    }
+  ]
+}
+```
+
+### 2. Tạo tin tức [Public]
+```http
+POST /api/news.php
+Content-Type: application/json
+
+{
+  "title": "Tiêu đề bài viết",
+  "excerpt": "Mô tả ngắn",
+  "content": "Nội dung chi tiết",
+  "thumbnail": "http://localhost/BE_Tech_Store/uploads/abc.jpg"
+}
+```
+
+**Validation:**
+- `title`: Bắt buộc
+- `content`: Bắt buộc
+- `excerpt`: Tùy chọn
+- `thumbnail`: Tùy chọn
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "News created"
+}
+```
+
+### 3. Cập nhật tin tức [Public]
+```http
+PUT /api/news.php
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Tiêu đề mới",
+  "excerpt": "Mô tả mới",
+  "content": "Nội dung mới",
+  "thumbnail": "http://localhost/BE_Tech_Store/uploads/xyz.jpg"
+}
+```
+
+**Validation:**
+- `id`: Bắt buộc
+- `title`: Bắt buộc
+- `content`: Bắt buộc
+- `excerpt`: Tùy chọn
+- `thumbnail`: Tùy chọn
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "News updated"
+}
+```
+
+### 4. Xóa tin tức [Public]
+```http
+DELETE /api/news.php
+Content-Type: application/json
+
+{
+  "id": 1
+}
+```
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "News deleted"
+}
+```
+
+---
+
+## CONTACT APIs
+
+### 1. Lấy danh sách contact [Public]
+```http
+GET /api/contact.php
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": 1,
+      "user_name": "Nguyễn Văn A",
+      "email": "user@example.com",
+      "title": "Tiêu đề",
+      "message": "Nội dung liên hệ",
+      "reply": null,
+      "created_at": "2025-01-01 12:00:00"
+    }
+  ]
+}
+```
+
+### 2. Lấy contact có phản hồi [Public]
+```http
+GET /api/contact.php?withReply=true
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "contacts": [
+    {
+      "id": 1,
+      "user_name": "Nguyễn Văn A",
+      "email": "user@example.com",
+      "title": "Tiêu đề",
+      "message": "Nội dung liên hệ",
+      "reply": "Phản hồi từ admin",
+      "created_at": "2025-01-01 12:00:00"
+    }
+  ]
+}
+```
+
+### 3. Lấy chi tiết contact [Public]
+```http
+GET /api/contact.php?id=1
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "contact": {
+    "id": 1,
+    "user_name": "Nguyễn Văn A",
+    "email": "user@example.com",
+    "title": "Tiêu đề",
+    "message": "Nội dung liên hệ",
+    "reply": null,
+    "created_at": "2025-01-01 12:00:00"
+  }
+}
+```
+
+### 4. Tạo contact mới [Public]
+```http
+POST /api/contact.php
+Content-Type: application/json
+
+{
+  "user_name": "Nguyễn Văn A",
+  "email": "user@example.com",
+  "title": "Tiêu đề liên hệ",
+  "message": "Nội dung liên hệ"
+}
+```
+
+**Validation:**
+- `user_name`: Bắt buộc
+- `email`: Bắt buộc, phải là email hợp lệ
+- `title`: Bắt buộc
+- `message`: Bắt buộc
+- `reply`: Mặc định rỗng
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "Contact created"
+}
+```
+
+### 5. Cập nhật phản hồi [Public]
+```http
+PUT /api/contact.php
+Content-Type: application/json
+
+{
+  "id": 1,
+  "reply": "Phản hồi từ admin"
+}
+```
+
+**Validation:**
+- `id`: Bắt buộc
+- `reply`: Bắt buộc
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "Contact reply updated"
+}
+```
+
+### 6. Xóa contact [Public]
+```http
+DELETE /api/contact.php?id=1
+```
+
+**Response – 200 OK**
+```json
+{
+  "success": true,
+  "id": 1,
+  "message": "Contact deleted"
+}
+```
+
+---
+
 Common HTTP Status Codes:
 - `400` - Bad Request (thiếu thông tin, dữ liệu không hợp lệ)
 - `401` - Unauthorized (chưa đăng nhập)
